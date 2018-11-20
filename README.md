@@ -1,2 +1,10 @@
 # retrOdroid
 Odroid-go Retro Tape Interface (Uses the DAC hat from www.backofficeshow.com/shop)
+
+Assumes you have installed the toolchain:
+
+https://docs.espressif.com/projects/esp-idf/en/stable/get-started/
+
+then at the command line you will need to run:
+
+make flash

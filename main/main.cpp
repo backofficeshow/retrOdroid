@@ -8,6 +8,8 @@ Chrissy
 Dr A
 Hopefully Sad Ken!
 
+come talk to us on Discord details on www.youtube.com/backofficeshow
+
 */
 
 #include "freertos/FreeRTOS.h"

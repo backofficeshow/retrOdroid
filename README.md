@@ -16,3 +16,19 @@ or
 make flash monitor
 
 This will enable the serial output from the ODroid
+
+
+
+For Reference to Make a Firmware File
+
+git clone https://github.com/othercrashoverride/odroid-go-firmware.git -b factory
+cd odroid-go-firmware/tools/mkfw
+make
+
+sudo apt install ffmpeg
+ffmpeg -i 86x48px-Logo.png -f rawvideo -pix_fmt rgb565 tile.raw
+
+
+./mkfw test tile.raw 0 16 1048576 app Hello_World.bin
+
+mv firmware.fw Hello_World.fw

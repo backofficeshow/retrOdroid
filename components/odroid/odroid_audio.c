@@ -135,6 +135,8 @@ void odroid_audio_terminate()
 
     i2s_start(I2S_NUM);
 
+    i2s_driver_uninstall(I2S_NUM);
+
 
     esp_err_t err = rtc_gpio_init(GPIO_NUM_25);
     err = rtc_gpio_init(GPIO_NUM_26);

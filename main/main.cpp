@@ -36,10 +36,13 @@ extern "C"
 #include "../components/ugui/ugui.h"
 }
 
+#include "Tape.hxx"
+
 #include <dirent.h>
 #include <string.h>
 #include <ctype.h>
 #include <math.h>
+#include <sstream>
 
 #define ESP32_PSRAM (0x3f800000)
 const char* SD_BASE_PATH = "/sd";
@@ -85,7 +88,23 @@ void playWave2(int32_t* buffer, uint16_t length, float frequency, float seconds)
   }
   odroid_audio_volume_set(ODROID_VOLUME_LEVEL0);
   odroid_audio_submit(outbuf, 1);
-  printf("DONE.\n");
+}
+
+void playWave3(void* data, size_t count){
+  printf("PLAY WAVE 3.\n");
+  uint8_t* b  = (uint8_t*)data;
+
+  for (uint8_t i=0; i<count; ++i) {
+    uint8_t byte = b[i];
+    for (short ii=8; ii >=0; --ii){
+      if (((byte >> ii)  & 0x01)){
+        playWave2(sine, WAV_SIZE, 2000, 0.5);
+      } else {
+        playWave2(sine, WAV_SIZE, 0, 0.5);
+      }
+    }
+  }
+  printf("PLAY WAVE 3 DONE.\n");
 }
 
 void playWave(int amplitude, float frequency, float seconds) {
@@ -583,6 +602,8 @@ static const char* ChooseFile()
 
 static uint32_t tiaSamplesPerFrame;
 
+static Tape *tape = 0;
+
 void retrOdroid_init(const char* filename)
 {
     printf("%s: HEAP:0x%x (%#08x)\n",
@@ -597,22 +618,34 @@ void retrOdroid_init(const char* filename)
     if (!fb) abort();
     //fb = (uint16_t*)ESP32_PSRAM;
 
-    char * fileName = "Testing 123";
+    FILE* fp = fopen(filename, "rb");
 
-    printf("Actual File: %s\n", fileName);
+    fseek(fp, 0, SEEK_END);
+    size_t size = ftell(fp);
+    fseek(fp, 0, SEEK_SET);
 
+    void* data = heap_caps_malloc(size, MALLOC_CAP_SPIRAM);
+    //void* data = malloc(size);
+    if (!data) abort();
+
+    size_t count = fread(data, 1, size, fp);
+    if (count != size) abort();
+
+    fclose(fp); fp = NULL;
+
+    tape = Tape::create((const uInt8*)data, (uInt32)size);
 
     UG_Init(&gui, pset, 320, 240);
 
     UG_WindowCreate(&window1, objbuffwnd1, MAX_OBJECTS, window1callback);
 
-    size_t fileNameLength = strlen(fileName) - 4; // remove extension
+    size_t fileNameLength = strlen(filename) - 4; // remove extension
     size_t displayLength = (fileNameLength <= MAX_DISPLAY_LENGTH) ? fileNameLength : MAX_DISPLAY_LENGTH;
 
     char * displayStrings = (char*)heap_caps_malloc(displayLength + 1, MALLOC_CAP_SPIRAM);
     if (!displayStrings) abort();
 
-    strncpy(displayStrings, fileName, displayLength);
+    strncpy(displayStrings, filename, displayLength);
     displayStrings[displayLength] = 0; // NULL terminate
 
     printf("File: %s\n", displayStrings);
@@ -657,7 +690,6 @@ void retrOdroid_init(const char* filename)
         {
             printf("PLAY WAVE 2\n");
             playWave2(sine, WAV_SIZE, 2000, 2);
-
         }else if (!previousState.values[ODROID_INPUT_VOLUME] && state.values[ODROID_INPUT_VOLUME])
         {
           odroid_audio_terminate();
@@ -716,8 +748,8 @@ extern "C" void app_main()
     }
 
 
-    //const char* romfile = ChooseFile();
-    const char* romfile = "TEST";
+    const char* romfile = ChooseFile();
+    //const char* romfile = "TEST";
     //printf("%s: filename='%s'\n", __func__, romfile);
 
 
@@ -827,4 +859,3 @@ extern "C" void app_main()
         }
     }
 }
-

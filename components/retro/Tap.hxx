@@ -10,6 +10,7 @@ class Tap : public Tape {
     virtual ~Tap();
   public:
     void reset();
+    void play(); 
     const uInt8* getImage(int& size) const;
   protected:
   private:

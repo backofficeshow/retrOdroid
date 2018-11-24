@@ -47,8 +47,6 @@ extern "C"
 #define ESP32_PSRAM (0x3f800000)
 const char* SD_BASE_PATH = "/sd";
 
-#define AUDIO_SAMPLE_RATE (44100)
-
 QueueHandle_t vidQueue;
 
 #define RETRODROID_WIDTH 160
@@ -57,57 +55,9 @@ uint8_t framebuffer[RETRODROID_WIDTH * RETRODROID_HEIGHT];
 uint16_t pal16[256];
 bool IsPal;
 
-static int AudioSink = ODROID_AUDIO_SINK_DAC;
+//static int AudioSink = ODROID_AUDIO_SINK_SPEAKER;
 
-#define I2S_SAMPLE_RATE   (44100)
-#define SAMPLERATE I2S_SAMPLE_RATE // Sample rate of our waveforms in Hz
-
-#define AMPLITUDE     1000
-#define WAV_SIZE      256
-int32_t sine[WAV_SIZE]     = {0};
-
-void generateSine(int32_t amplitude, int32_t* buffer, uint16_t length) {
-  // Generate a sine wave signal with the provided amplitude and store it in
-  // the provided buffer of size length.
-  for (int i=0; i<length; ++i) {
-    buffer[i] = int32_t(float(amplitude)*sin(2.0*M_PI*(1.0/length)*i));
-  }
-}
-
-void playWave2(int32_t* buffer, uint16_t length, float frequency, float seconds) {
-  short outbuf[2];
-  uint32_t iterations = seconds*SAMPLERATE;
-  float delta = (frequency*length)/float(SAMPLERATE);
-  odroid_audio_volume_set(ODROID_VOLUME_LEVEL4);
-  for (uint32_t i=0; i<iterations; ++i) {
-    uint16_t pos = uint32_t(i*delta) % length;
-    int32_t sample = buffer[pos];
-    outbuf[0] = sample;
-    outbuf[1] = sample;
-    odroid_audio_submit(outbuf, 1);
-  }
-  odroid_audio_volume_set(ODROID_VOLUME_LEVEL0);
-  odroid_audio_submit(outbuf, 1);
-}
-
-void playWave3(void* data, size_t count){
-  printf("PLAY WAVE 3.\n");
-  uint8_t* b  = (uint8_t*)data;
-
-  for (uint8_t i=0; i<count; ++i) {
-    uint8_t byte = b[i];
-    for (short ii=8; ii >=0; --ii){
-      if (((byte >> ii)  & 0x01)){
-        playWave2(sine, WAV_SIZE, 2000, 0.5);
-      } else {
-        playWave2(sine, WAV_SIZE, 0, 0.5);
-      }
-    }
-  }
-  printf("PLAY WAVE 3 DONE.\n");
-}
-
-void playWave(int amplitude, float frequency, float seconds) {
+/*void playWave(int amplitude, float frequency, float seconds) {
   short outbuf[2];
   int halfWavelength = (SAMPLERATE / frequency);
   uint32_t iterations = seconds*SAMPLERATE;
@@ -118,7 +68,6 @@ void playWave(int amplitude, float frequency, float seconds) {
 
   for (uint32_t i=0; i<iterations; ++i) {
     if (count % halfWavelength == 0) {
-      // invert the sample every half wavelength count multiple to generate square wave
       sample = -1 * sample;
     }
     outbuf[0] = sample;
@@ -129,7 +78,7 @@ void playWave(int amplitude, float frequency, float seconds) {
   odroid_audio_volume_set(ODROID_VOLUME_LEVEL0);
   odroid_audio_submit(outbuf, 1);
   printf("DONE.\n");
-}
+}*/
 
 void videoTask(void *arg)
 {
@@ -680,27 +629,13 @@ void retrOdroid_init(const char* filename)
             esp_restart();
         }else if (!previousState.values[ODROID_INPUT_A] && state.values[ODROID_INPUT_A])
         {
-            printf("PLAY WAVE 1\n");
-            for (int i=0; i < ll; i++){
-              //playWave(1000, frequency[i], (duration[i]/1000)); //5 KHz test
-              playWave2(sine, WAV_SIZE, frequency[i], (duration[i]/1000));
-
-            }
+            tape->play();
         }else if (!previousState.values[ODROID_INPUT_B] && state.values[ODROID_INPUT_B])
         {
-            printf("PLAY WAVE 2\n");
-            playWave2(sine, WAV_SIZE, 2000, 2);
+            tape->play();
         }else if (!previousState.values[ODROID_INPUT_VOLUME] && state.values[ODROID_INPUT_VOLUME])
         {
-          odroid_audio_terminate();
-          if (AudioSink == ODROID_AUDIO_SINK_DAC){
-            AudioSink = ODROID_AUDIO_SINK_SPEAKER;
-            odroid_audio_init(ODROID_AUDIO_SINK_SPEAKER, AUDIO_SAMPLE_RATE);
-          }else if (AudioSink == ODROID_AUDIO_SINK_SPEAKER){
-            AudioSink = ODROID_AUDIO_SINK_DAC;
-            odroid_audio_init(ODROID_AUDIO_SINK_DAC, AUDIO_SAMPLE_RATE);
-          }
-          odroid_audio_volume_set(ODROID_VOLUME_LEVEL0);
+            tape->changeDac();
         }
 
         previousState = state;
@@ -735,8 +670,6 @@ extern "C" void app_main()
     ili9341_init();
     ili9341_clear(0x0000);
 
-    generateSine(AMPLITUDE, sine, WAV_SIZE);
-
     //vTaskDelay(500 / portTICK_RATE_MS);
 
     // Open SD card
@@ -754,9 +687,6 @@ extern "C" void app_main()
 
 
     ili9341_clear(0x0000);
-
-    odroid_audio_init(ODROID_AUDIO_SINK_DAC, AUDIO_SAMPLE_RATE);
-    odroid_audio_volume_set(ODROID_VOLUME_LEVEL0);
 
     retrOdroid_init(romfile);
 
@@ -799,8 +729,8 @@ extern "C" void app_main()
         if (!last_gamepad.values[ODROID_INPUT_VOLUME] &&
             gamepad.values[ODROID_INPUT_VOLUME])
         {
-            odroid_audio_volume_change();
-            printf("%s: Volume=%d\n", __func__, odroid_audio_volume_get());
+            //odroid_audio_volume_change();
+            //printf("%s: Volume=%d\n", __func__, odroid_audio_volume_get());
         }
 
 

@@ -16,11 +16,11 @@
 
 //3540000 / t-state / 2
 #define NO_FREQ               0.0
-#define PILOT_FREQ            816.42/2
-#define SYNCFIRST_FREQ        2653.67/2
-#define SYNCSECOND_FREQ       2408.16/2
-#define ZERO_PULSE_FREQ       2070.18/2
-#define ONE_PULSE_FREQ        1035.09/2
+#define PILOT_FREQ            816.42
+#define SYNCFIRST_FREQ        2653.67
+#define SYNCSECOND_FREQ       2408.16
+#define ZERO_PULSE_FREQ       2070.18
+#define ONE_PULSE_FREQ        1035.09
 
 const char TAPcheck[7] = {'T','A','P','t','a','p','.'};
 
@@ -55,7 +55,7 @@ void Tap::play()
     //build sync1
     printf("  SYNC 1\n");
     playFreq(AMPLITUDE, SYNCFIRST_FREQ, SYNCFIRST / MS);
-    playFreq(AMPLITUDE, NO_FREQ, SYNCFIRST / MS);
+    //playFreq(AMPLITUDE, NO_FREQ, SYNCFIRST / MS);
 
     //build sync2
     printf("  SYNC 2\n");

@@ -13,11 +13,9 @@ class Tape;
 
 #include "bspf.hxx"
 
-#define AUDIO_SAMPLE_RATE (44100)
-
 #define I2S_SAMPLE_RATE   (44100)
-#define SAMPLERATE I2S_SAMPLE_RATE // Sample rate of our waveforms in Hz
-#define AMPLITUDE             1024
+#define AUDIO_SAMPLE_RATE I2S_SAMPLE_RATE // Sample rate of our waveforms in Hz
+#define AMPLITUDE             32767
 
 static ODROID_AUDIO_SINK AudioSink = ODROID_AUDIO_SINK_DAC;
 
